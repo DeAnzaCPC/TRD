@@ -1,18 +1,13 @@
 /**
- * Author: Noam527
- * Date: 2019-04-24
- * License: CC0
- * Source: folklore
+ * Author: Sunho
  * Description:
  * Status: tested
  */
 #pragma once
 
-const ll mod = 1000000007; // faster if const
-
-ll modpow(ll b, ll e) {
-	ll ans = 1;
-	for (; e; b = b * b % mod, e /= 2)
-		if (e & 1) ans = ans * b % mod;
-	return ans;
+ll binexp(ll b, ll n) {
+	ll res = 1;
+	for (; n; b = b * b % MOD, n /= 2)
+		if (n & 1) res = res * b % MOD;
+	return res;
 }

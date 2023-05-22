@@ -25,7 +25,7 @@
 typedef Point<double> P;
 vector<P> polygonCut(const vector<P>& poly, P s, P e) {
 	vector<P> res;
-	rep(i,0,sz(poly)) {
+	for(int i=0;i<poly.size();i++) {
 		P cur = poly[i], prev = i ? poly[i-1] : poly.back();
 		bool side = s.cross(e, cur) < 0;
 		if (side != (s.cross(e, prev) < 0))

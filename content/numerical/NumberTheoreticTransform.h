@@ -1,53 +1,79 @@
 /**
- * Author: chilli
- * Date: 2019-04-16
- * License: CC0
- * Source: based on KACTL's FFT
+ * Author: Ralph
  * Description: ntt(a) computes $\hat f(k) = \sum_x a[x] g^{xk}$ for all $k$, where $g=\text{root}^{(mod-1)/N}$.
  * N must be a power of 2.
- * Useful for convolution modulo specific nice primes of the form $2^a b+1$,
- * where the convolution result has size at most $2^a$. For arbitrary modulo, see FFTMod.
-   \texttt{conv(a, b) = c}, where $c[x] = \sum a[i]b[x-i]$.
-   For manual convolution: NTT the inputs, multiply
-   pointwise, divide by n, reverse(start+1, end), NTT back.
- * Inputs must be in [0, mod).
  * Time: O(N \log N)
- * Status: stress-tested
  */
-#pragma once
+#define MOD 998244353
+template<long long P>
+struct NTTHelper {
+	static const int sz = 1 << 20;
+	long long omega[sz];
 
-#include "../number-theory/ModPow.h"
-
-const ll mod = (119 << 23) + 1, root = 62; // = 998244353
-// For p < 2^30 there is also e.g. 5 << 25, 7 << 26, 479 << 21
-// and 483 << 21 (same root). The last two are > 10^9.
-typedef vector<ll> vl;
-void ntt(vl &a) {
-	int n = sz(a), L = 31 - __builtin_clz(n);
-	static vl rt(2, 1);
-	for (static int k = 2, s = 2; k < n; k *= 2, s++) {
-		rt.resize(n);
-		ll z[] = {1, modpow(root, mod >> s)};
-		rep(i,k,2*k) rt[i] = rt[i / 2] * z[i & 1] % mod;
-	}
-	vi rev(n);
-	rep(i,0,n) rev[i] = (rev[i / 2] | (i & 1) << L) / 2;
-	rep(i,0,n) if (i < rev[i]) swap(a[i], a[rev[i]]);
-	for (int k = 1; k < n; k *= 2)
-		for (int i = 0; i < n; i += 2 * k) rep(j,0,k) {
-			ll z = rt[j + k] * a[i + j + k] % mod, &ai = a[i + j];
-			a[i + j + k] = ai - z + (z > ai ? mod : 0);
-			ai += (ai + z >= mod ? z - mod : z);
+	NTTHelper() {
+		omega[sz / 2] = 1;
+		long long exp = 1, base = 3, pow = P / sz;
+		while (pow) {
+			if (pow & 1)
+				exp = exp * base % P;
+			base = base * base % P;
+			pow >>= 1;
 		}
-}
-vl conv(const vl &a, const vl &b) {
-	if (a.empty() || b.empty()) return {};
-	int s = sz(a) + sz(b) - 1, B = 32 - __builtin_clz(s), n = 1 << B;
-	int inv = modpow(n, mod - 2);
-	vl L(a), R(b), out(n);
-	L.resize(n), R.resize(n);
-	ntt(L), ntt(R);
-	rep(i,0,n) out[-i & (n - 1)] = (ll)L[i] * R[i] % mod * inv % mod;
-	ntt(out);
-	return {out.begin(), out.begin() + s};
+		for (int i = sz / 2 + 1; i < sz; i++)
+			omega[i] = omega[i - 1] * exp % P;
+		for (int i = sz / 2 - 1; i > 0; i--)
+			omega[i] = omega[i << 1];
+	}
+	
+	void ntt(long long *arr, int m) {
+		if (m == 1)
+			return;
+		ntt(arr, m / 2);
+		ntt(arr + m / 2, m / 2);
+		for (int i = 0; i < m / 2; i++) {
+			long long e = arr[i], o = omega[i + m / 2] * arr[i + m / 2] % P;
+			arr[i] = e + o < P ? e + o : e + o - P;
+			arr[i + m / 2] = e - o >= 0 ? e - o : e - o + P;
+		}
+	}
+
+	void ntt(vector<long long> &arr, bool inverse) {
+		int m = arr.size();
+		for (int i = 1, j = 0; i < m; i++) {
+			int bit = m >> 1;
+			for (; j & bit; bit >>= 1)
+				j ^= bit;
+			j ^= bit;
+
+			if (i < j)
+				swap(arr[i], arr[j]);
+		}
+		ntt(arr.data(), m);
+		if (inverse)
+		{
+			reverse(arr.begin() + 1, arr.end());
+			for (int i = 0; i < m; i++)
+				arr[i] = arr[i] * (P - P / m) % P;
+		}
+	}
+
+	vector<long long> multiply(vector<long long> a, vector<long long> b) {
+		ntt(a, false);
+		ntt(b, false);
+		vector<long long> res(a.size());
+		for (int i = 0; i < res.size(); i++) {
+			res[i] = a[i] * b[i] % P;
+		}
+		ntt(res, true);
+		return res;
+	}
+};
+NTTHelper<MOD> helper;
+
+vector<long long> multiply(vector<long long> a, vector<long long> b) {
+	int sz = 1 << (sizeof(int) * 8 - __builtin_clz(a.size() + b.size() - 2));
+	a.resize(sz), b.resize(sz);
+	vector<long long> res = helper.multiply(a, b);
+	res.resize(a.size() + b.size() - 1);
+	return res;
 }

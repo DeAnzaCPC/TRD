@@ -145,14 +145,14 @@ def processwithcomments(caption, instream, outstream, listingslang):
         nsource = nsource.rstrip() + source[end:]
     nsource = nsource.strip()
 
-    if listingslang in ['C++', 'Java']:
-        hash_script = 'hash'
-        p = subprocess.Popen(['sh', 'content/contest/%s.sh' % hash_script], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding="utf-8")
-        hsh, _ = p.communicate(nsource)
-        hsh = hsh.split(None, 1)[0]
-        hsh = hsh + ', '
-    else:
-        hsh = ''
+    # if listingslang in ['C++', 'Java']:
+    #     hash_script = 'hash'
+    #     p = subprocess.Popen(['sh', 'content/contest/%s.sh' % hash_script], stdin=subprocess.PIPE, stdout=subprocess.PIPE, encoding="utf-8")
+    #     hsh, _ = p.communicate(nsource)
+    #     hsh = hsh.split(None, 1)[0]
+    #     hsh = hsh + ', '
+    # else:
+    #     hsh = ''
     # Produce output
     out = []
     if warning:
@@ -171,8 +171,8 @@ def processwithcomments(caption, instream, outstream, listingslang):
             out.append(r"\defmemory{%s}" % ordoescape(commands["Memory"]))
         if includelist:
             out.append(r"\leftcaption{%s}" % pathescape(", ".join(includelist)))
-        if nsource:
-            out.append(r"\rightcaption{%s%d lines}" % (hsh, len(nsource.split("\n"))))
+        # if nsource:
+        #     out.append(r"\rightcaption{%s%d lines}" % (hsh, len(nsource.split("\n"))))
         langstr = ", language="+listingslang
         out.append(r"\begin{lstlisting}[caption={%s}%s]" % (pathescape(caption), langstr))
         out.append(nsource)

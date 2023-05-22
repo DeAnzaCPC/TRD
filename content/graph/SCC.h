@@ -1,41 +1,47 @@
 /**
- * Author: Lukas Polacek
- * Date: 2009-10-28
- * License: CC0
- * Source: Czech graph algorithms book, by Demel. (Tarjan's algorithm)
+ * Author: Sunho
  * Description: Finds strongly connected components in a
- * directed graph. If vertices $u, v$ belong to the same component,
- * we can reach $u$ from $v$ and vice versa.
- * Usage: scc(graph, [\&](vi\& v) { ... }) visits all components
- * in reverse topological order. comp[i] holds the component
- * index of a node (a component only has edges to components with
- * lower index). ncomps will contain the number of components.
- * Time: O(E + V)
- * Status: Bruteforce-tested for N <= 5
+ * directed graph.
  */
-#pragma once
 
-vi val, comp, z, cont;
-int Time, ncomps;
-template<class G, class F> int dfs(int j, G& g, F& f) {
-	int low = val[j] = ++Time, x; z.push_back(j);
-	for (auto e : g[j]) if (comp[e] < 0)
-		low = min(low, val[e] ?: dfs(e,g,f));
+struct sc_components {
+  int n;
+  vector<vector<int>> adj, adj_inv;
+  vector<vector<int>> comps;
+  vector<int> comp_ids;
+  int num_comp = 0;
+  sc_components(int n) : n(n), adj(n), adj_inv(n) {}
 
-	if (low == val[j]) {
-		do {
-			x = z.back(); z.pop_back();
-			comp[x] = ncomps;
-			cont.push_back(x);
-		} while (x != j);
-		f(cont); cont.clear();
-		ncomps++;
-	}
-	return val[j] = low;
-}
-template<class G, class F> void scc(G& g, F f) {
-	int n = sz(g);
-	val.assign(n, 0); comp.assign(n, -1);
-	Time = ncomps = 0;
-	rep(i,0,n) if (comp[i] < 0) dfs(i, g, f);
-}
+  // add edge
+  void add(int u, int v) {
+    adj[u].push_back(v);
+    adj_inv[v].push_back(u);
+  }
+
+  // find strongly connected components of graph
+  void run() {
+    vector<bool> vis(n);
+    vector<int> order;
+    auto topo_dfs = [&](auto self, int u) -> void {
+      vis[u] = true;
+      for (int v : adj[u]) if (!vis[v]) self(self, v);
+      order.push_back(u);
+    };
+    for (int i=0;i<n;i++) if(!vis[i]) topo_dfs(topo_dfs, i);
+    reverse(begin(order), end(order));
+    comp_ids.assign(n, 0);
+    vis.assign(n, false);
+    auto comp_dfs = [&](auto self, int u) -> void {
+      vis[u] = true;
+      comp_ids[u] = num_comp;
+      comps.back().push_back(u);
+      for (int v : adj_inv[u]) if (!vis[v]) self(self, v);
+    };
+    for (int i : order)
+      if (!vis[i]) {
+        comps.push_back({});
+        comp_dfs(comp_dfs, i);
+        num_comp++;
+      }
+  }
+};

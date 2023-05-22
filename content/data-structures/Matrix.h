@@ -1,40 +1,42 @@
 /**
- * Author: Ulf Lundstrom
- * Date: 2009-08-03
- * License: CC0
- * Source: My head
- * Description: Basic operations on square matrices.
- * Usage: Matrix<int, 3> A;
- *  A.d = {{{{1,2,3}}, {{4,5,6}}, {{7,8,9}}}};
- *  vector<int> vec = {1,2,3};
- *  vec = (A^N) * vec;
- * Status: tested
+ * Author: Ralph
+ * Description: Matrix
  */
-#pragma once
+#define MOD 1000000007ll
 
-template<class T, int N> struct Matrix {
-	typedef Matrix M;
-	array<array<T, N>, N> d{};
-	M operator*(const M& m) const {
-		M a;
-		rep(i,0,N) rep(j,0,N)
-			rep(k,0,N) a.d[i][j] += d[i][k]*m.d[k][j];
-		return a;
+struct Matrix {
+	int n, m;
+	vector<vector<long long>> vals;
+
+	Matrix(int n, int m) : n(n), m(m), vals(n, vector<long long>(m)) {}
+
+	vector<long long>& operator[](int i) {
+		return vals[i];
 	}
-	vector<T> operator*(const vector<T>& vec) const {
-		vector<T> ret(N);
-		rep(i,0,N) rep(j,0,N) ret[i] += d[i][j] * vec[j];
-		return ret;
-	}
-	M operator^(ll p) const {
-		assert(p >= 0);
-		M a, b(*this);
-		rep(i,0,N) a.d[i][i] = 1;
-		while (p) {
-			if (p&1) a = a*b;
-			b = b*b;
-			p >>= 1;
+
+	Matrix operator*(const Matrix &other) {
+		Matrix res(n, other.m);
+		for (int k = 0; k < m; k++) {
+			for (int i = 0; i < n; i++) {
+				for (int j = 0; j < other.m; j++) {
+					res[i][j] += vals[i][k] * other[k][j];
+					res[i][j] %= MOD;
+				}
+			}
 		}
-		return a;
+		return res;
+	}
+
+	static Matrix exp(Matrix base, long long exp) {
+		Matrix res(base.n, base.n);
+		for (int i = 0; i < res.n; i++) {
+			res[i][i] = 1;
+    }
+		while (exp > 0) {
+			if (exp & 1) res = res * base;
+			base = base * base;
+			exp >>= 1;
+		}
+		return res;
 	}
 };

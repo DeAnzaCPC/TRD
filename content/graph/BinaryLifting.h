@@ -1,5 +1,5 @@
 /**
- * Author: Johan Sannemo
+ * Author: Ralph
  * Date: 2015-02-06
  * License: CC0
  * Source: Folklore
@@ -11,28 +11,72 @@
  */
 #pragma once
 
-vector<vi> treeJump(vi& P){
-	int on = 1, d = 1;
-	while(on < sz(P)) on *= 2, d++;
-	vector<vi> jmp(d, P);
-	rep(i,1,d) rep(j,0,sz(P))
-		jmp[i][j] = jmp[i-1][jmp[i-1][j]];
-	return jmp;
+vector<int> adj[MAXN];
+int parent[MAXN][20], depth[MAXN];
+
+int getParent(int x, int k) {
+  for (int j = 0; k >= 1 << j; j++) {
+    if (k & (1 << j))
+      x = parent[x][j];
+  }
+  return x;
 }
 
-int jmp(vector<vi>& tbl, int nod, int steps){
-	rep(i,0,sz(tbl))
-		if(steps&(1<<i)) nod = tbl[i][nod];
-	return nod;
+void dfs(int cur) {
+  for (int next : adj[cur]) {
+    if (next == parent[cur][0])
+      continue;
+    parent[next][0] = cur;
+    depth[next] = depth[cur] + 1;
+    dfs(next);
+  }
 }
 
-int lca(vector<vi>& tbl, vi& depth, int a, int b) {
-	if (depth[a] < depth[b]) swap(a, b);
-	a = jmp(tbl, a, depth[a] - depth[b]);
-	if (a == b) return a;
-	for (int i = sz(tbl); i--;) {
-		int c = tbl[i][a], d = tbl[i][b];
-		if (c != d) a = c, b = d;
-	}
-	return tbl[0][a];
+int main() {
+  int n, q;
+  cin >> n >> q;
+
+  for (int i = 0; i < n - 1; i++) {
+    int a, b;
+    cin >> a >> b;
+    adj[a].push_back(b);
+    adj[b].push_back(a);
+  }
+
+  dfs(1);
+
+  for (int i = 1; i <= 18; i++) {
+    for (int j = 1; j <= n; j++) {
+      parent[j][i] = parent[parent[j][i - 1]][i - 1];
+    }
+  }
+
+  for (int i = 0; i < q; i++) {
+    int a, b;
+    cin >> a >> b;
+
+    if (depth[a] > depth[b])
+      swap(a, b);
+
+    int res = depth[b] - depth[a];
+    b = getParent(b, res);
+
+    if (a == b) {
+      cout << res << endl;
+      continue;
+    }
+
+    for (int j = 18; j >= 0; j--) {
+      if (parent[a][j] != parent[b][j]) {
+        res += (2 << j);
+        a = parent[a][j];
+        b = parent[b][j];
+      }
+    }
+
+    // res is distance between a and b
+    cout << res + 2 << endl;
+    // parent[a][0] is LCA
+    cout << parent[a][0] << endl;
+  }
 }

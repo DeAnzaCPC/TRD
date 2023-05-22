@@ -1,58 +1,65 @@
 /**
- * Author: Ludo Pulles, chilli, Simon Lindholm
- * Date: 2019-01-09
- * License: CC0
- * Source: http://neerc.ifmo.ru/trains/toulouse/2017/fft2.pdf (do read, it's excellent)
-   Accuracy bound from http://www.daemonology.net/papers/fft.pdf
+ * Author: Ralph
  * Description: fft(a) computes $\hat f(k) = \sum_x a[x] \exp(2\pi i \cdot k x / N)$ for all $k$. N must be a power of 2.
-   Useful for convolution:
-   \texttt{conv(a, b) = c}, where $c[x] = \sum a[i]b[x-i]$.
-   For convolution of complex numbers or more than two vectors: FFT, multiply
-   pointwise, divide by n, reverse(start+1, end), FFT back.
-   Rounding is safe if $(\sum a_i^2 + \sum b_i^2)\log_2{N} < 9\cdot10^{14}$
-   (in practice $10^{16}$; higher for random inputs).
-   Otherwise, use NTT/FFTMod.
+   Useful for convolution
  * Time: O(N \log N) with $N = |A|+|B|$ ($\tilde 1s$ for $N=2^{22}$)
- * Status: somewhat tested
- * Details: An in-depth examination of precision for both FFT and FFTMod can be found
- * here (https://github.com/simonlindholm/fft-precision/blob/master/fft-precision.md)
  */
-#pragma once
+using cd = complex<double>;
 
-typedef complex<double> C;
-typedef vector<double> vd;
-void fft(vector<C>& a) {
-	int n = sz(a), L = 31 - __builtin_clz(n);
-	static vector<complex<long double>> R(2, 1);
-	static vector<C> rt(2, 1);  // (^ 10% faster if double)
-	for (static int k = 2; k < n; k *= 2) {
-		R.resize(n); rt.resize(n);
-		auto x = polar(1.0L, acos(-1.0L) / k);
-		rep(i,k,2*k) rt[i] = R[i] = i&1 ? R[i/2] * x : R[i/2];
-	}
-	vi rev(n);
-	rep(i,0,n) rev[i] = (rev[i / 2] | (i & 1) << L) / 2;
-	rep(i,0,n) if (i < rev[i]) swap(a[i], a[rev[i]]);
-	for (int k = 1; k < n; k *= 2)
-		for (int i = 0; i < n; i += 2 * k) rep(j,0,k) {
-			// C z = rt[j+k] * a[i+j+k]; // (25% faster if hand-rolled)  /// include-line
-			auto x = (double *)&rt[j+k], y = (double *)&a[i+j+k];        /// exclude-line
-			C z(x[0]*y[0] - x[1]*y[1], x[0]*y[1] + x[1]*y[0]);           /// exclude-line
-			a[i + j + k] = a[i + j] - z;
-			a[i + j] += z;
+const double PI = atan(1) * 4;
+
+struct FFTHelper {
+	static const int sz = 1 << 20;
+	cd omega[sz];
+	FFTHelper() {
+		omega[sz / 2] = 1;
+		cd pow = exp(cd(0, 2 * PI / sz));
+		for (int i = sz / 2 + 1; i < sz; i++)
+			omega[i] = omega[i - 1] * pow;
+		for (int i = sz / 2 - 1; i > 0; i--)
+			omega[i] = omega[i << 1];
+  }
+    
+	void fft(cd *arr, int m) {
+		if (m == 1)
+			return;
+		fft(arr, m / 2);
+		fft(arr + m / 2, m / 2);
+		for (int i = 0; i < m / 2; i++) {
+			cd e = arr[i], o = omega[i + m / 2] * arr[i + m / 2];
+			arr[i] = e + o;
+			arr[i + m / 2] = e - o;
 		}
-}
-vd conv(const vd& a, const vd& b) {
-	if (a.empty() || b.empty()) return {};
-	vd res(sz(a) + sz(b) - 1);
-	int L = 32 - __builtin_clz(sz(res)), n = 1 << L;
-	vector<C> in(n), out(n);
-	copy(all(a), begin(in));
-	rep(i,0,sz(b)) in[i].imag(b[i]);
-	fft(in);
-	for (C& x : in) x *= x;
-	rep(i,0,n) out[i] = in[-i & (n - 1)] - conj(in[i]);
-	fft(out);
-	rep(i,0,sz(res)) res[i] = imag(out[i]) / (4 * n);
-	return res;
-}
+	}
+
+	void fft(vector<cd> &arr, bool inverse) {
+		int m = arr.size();
+		for (int i = 1, j = 0; i < m; i++) {
+			int bit = m >> 1;
+			for (; j & bit; bit >>= 1)
+				j ^= bit;
+			j ^= bit;
+
+			if (i < j)
+				swap(arr[i], arr[j]);
+		}
+		fft(arr.data(), m);
+		if (inverse) {
+			reverse(arr.begin() + 1, arr.end());
+			cd inv((double)1 / m, 0);
+			for (int i = 0; i < m; i++)
+				arr[i] = arr[i] * inv;
+		}
+	}
+
+	vector<cd> multiply(vector<cd> a, vector<cd> b) {
+		fft(a, false);
+		fft(b, false);
+		vector<cd> res(a.size());
+		for (int i = 0; i < res.size(); i++) {
+			res[i] = a[i] * b[i];
+		}
+		fft(res, true);
+		return res;
+	}
+} helper;

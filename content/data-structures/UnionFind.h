@@ -1,24 +1,30 @@
 /**
- * Author: Lukas Polacek
- * Date: 2009-10-26
- * License: CC0
- * Source: folklore
+ * Author: Ralph
  * Description: Disjoint-set data structure.
  * Time: $O(\alpha(N))$
  */
-#pragma once
+#define MAXN 100000
 
-struct UF {
-	vi e;
-	UF(int n) : e(n, -1) {}
-	bool sameSet(int a, int b) { return find(a) == find(b); }
-	int size(int x) { return -e[find(x)]; }
-	int find(int x) { return e[x] < 0 ? x : e[x] = find(e[x]); }
-	bool join(int a, int b) {
-		a = find(a), b = find(b);
-		if (a == b) return false;
-		if (e[a] > e[b]) swap(a, b);
-		e[a] += e[b]; e[b] = a;
-		return true;
-	}
-};
+//can also be by rank
+int parent[MAXN], sz[MAXN]; 
+
+void make_set(int v) { 
+	parent[v] = v;
+	sz[v] = 1;
+}
+
+int find_set(int v) {
+  if (parent[v] == v)
+		return v;
+  return parent[v] = find_set(parent[v]);
+}
+
+void union_set(int a, int b) {
+	a = find_set(a);
+	b = find_set(b);
+  if (sz[a] > sz[b]) {
+		swap(a, b);
+  }
+  parent[a] = b;
+  sz[b] += sz[a];
+}
