@@ -1,6 +1,6 @@
 /**
  * Author: Ralph
- * Description: 
+ * Description: Calculate Lexicographically Minimal String Rotation
  * Time: O(N)
  */
 

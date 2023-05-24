@@ -20,8 +20,9 @@ struct SegTree {
 		for (k >>= 1; k; k >>= 1)
 			tree[k] = combine(tree[k << 1], tree[k << 1 | 1]);
 	}
-	// query on [l,r)
+	// query on [l,r]
   T query(int l, int r) {
+		++r; // remove to make it [l,r)
 		T resl = def, resr = def;
 		for (l += n, r += n; l < r; l >>= 1, r >>= 1) {
 			if (l & 1) resl = combine(resl, tree[l++]);

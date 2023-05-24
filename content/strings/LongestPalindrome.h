@@ -1,6 +1,6 @@
 /**
  * Author: Ralph
- * Description: 
+ * Description: Find the longest palindromic substring of the string.
  * Time: O(N)
  */
 

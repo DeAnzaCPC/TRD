@@ -38,8 +38,9 @@ struct LazySegTree {
 			}
 		}
 	}
-	// update on [l,r)
+	// update on [l,r]
 	void increment(int l, int r, L val) {
+		++r; // remove to change to [l,r)
 		l += n, r += n;
 		push(l), push(r - 1);
 		int l0 = l, r0 = r, len = 1;
@@ -49,8 +50,9 @@ struct LazySegTree {
 		}
 		build(l0), build(r0 - 1);
 	}
-	// query on [l,r)
+	// query on [l,r]
 	T query(int l, int r) {
+		++r; // remove to change to [l,r)
 		l += n, r += n;
 		push(l), push(r - 1);
 		T resl = def, resr = def;

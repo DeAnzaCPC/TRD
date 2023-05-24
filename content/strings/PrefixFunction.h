@@ -1,6 +1,6 @@
 /**
  * Author: Sunho
- * Description: 
+ * Description: pi[x] computes the length of the longest prefix of s that ends at x, other than s[0...x] itself (abacaba -> 0010123).
  * Time: O(N)
  */
 

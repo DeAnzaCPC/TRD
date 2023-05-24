@@ -1,6 +1,6 @@
 /**
  * Author: Ralph
- * Description: 
+ * Description: Trie
  * Time: O(N)
  */
 

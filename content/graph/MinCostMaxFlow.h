@@ -13,18 +13,17 @@
 // #include <bits/extc++.h> /// include-line, keep-include
 
 const ll INF = numeric_limits<ll>::max() / 4;
-typedef vector<ll> VL;
 
 struct MCMF {
 	int N;
-	vector<vi> ed, red;
-	vector<VL> cap, flow, cost;
-	vi seen;
-	VL dist, pi;
-	vector<pii> par;
+	vector<vector<int>> ed, red;
+	vector<vector<ll>> cap, flow, cost;
+	vector<int> seen;
+	vector<ll> dist, pi;
+	vector<pair<int,int>> par;
 
 	MCMF(int N) :
-		N(N), ed(N), red(N), cap(N, VL(N)), flow(cap), cost(cap),
+		N(N), ed(N), red(N), cap(N, vector<ll>(N)), flow(cap), cost(cap),
 		seen(N), dist(N), pi(N), par(N) {}
 
 	void addEdge(int from, int to, ll cap, ll cost) {
@@ -35,8 +34,8 @@ struct MCMF {
 	}
 
 	void path(int s) {
-		fill(all(seen), 0);
-		fill(all(dist), INF);
+		fill(begin(seen), end(seen), 0);
+		fill(begin(dist), end(dist), INF);
 		dist[s] = 0; ll di;
 
 		__gnu_pbds::priority_queue<pair<ll, int>> q;
@@ -61,7 +60,7 @@ struct MCMF {
 			for (int i : red[s]) if (!seen[i])
 				relax(i, flow[i][s], -cost[i][s], 0);
 		}
-		rep(i,0,N) pi[i] = min(pi[i] + dist[i], INF);
+		for(int i=0;i<N;i++) pi[i] = min(pi[i] + dist[i], INF);
 	}
 
 	pair<ll, ll> maxflow(int s, int t) {
@@ -75,16 +74,16 @@ struct MCMF {
 				if (r) flow[p][x] += fl;
 				else flow[x][p] -= fl;
 		}
-		rep(i,0,N) rep(j,0,N) totcost += cost[i][j] * flow[i][j];
+		for(int i=0;i<N;i++) for(int j=0;j<N;j++) totcost += cost[i][j] * flow[i][j];
 		return {totflow, totcost};
 	}
 
 	// If some costs can be negative, call this before maxflow:
 	void setpi(int s) { // (otherwise, leave this out)
-		fill(all(pi), INF); pi[s] = 0;
+		fill(begin(pi), end(pi), INF); pi[s] = 0;
 		int it = N, ch = 1; ll v;
 		while (ch-- && it--)
-			rep(i,0,N) if (pi[i] != INF)
+			for(int i=0;i<N;i++) if (pi[i] != INF)
 				for (int to : ed[i]) if (cap[i][to])
 					if ((v = pi[i] + cost[i][to]) < pi[to])
 						pi[to] = v, ch = 1;

@@ -1,7 +1,6 @@
 /**
  * Author: Ralph
- * Description: 
- * Time: O(N)
+ * Description: String math util
  */
 
 string removeLeadingZeros(string a) {

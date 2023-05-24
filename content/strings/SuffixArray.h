@@ -1,7 +1,14 @@
 /**
  * Author: Ralph
- * Description: 
- * Time: O(N)
+ * Description: Builds suffix array for a string.
+ * \texttt{sa[i]} is the starting index of the suffix which
+ * is $i$'th in the sorted suffix array.
+ * The returned vector is of size $n+1$, and \texttt{sa[0] = n}.
+ * The \texttt{lcp} array contains longest common prefixes for
+ * neighbouring strings in the suffix array:
+ * \texttt{lcp[i] = lcp(sa[i], sa[i-1])}, \texttt{lcp[0] = 0}.
+ * The input string must not contain any zero bytes.
+ * Time: O(n \log n)
  */
 
 int order[2][MAXN], classes[2][MAXN], cnt[MAXN];
