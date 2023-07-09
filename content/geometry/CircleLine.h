@@ -19,6 +19,6 @@ vector<P> circleLine(P c, double r, P a, P b) {
 	double s = a.cross(b, c), h2 = r*r - s*s / ab.dist2();
 	if (h2 < 0) return {};
 	if (h2 == 0) return {p};
-	P h = ab.unit() * sqrt(h2);
+	P h = ab / ab.dist() * sqrt(h2);
 	return {p - h, p + h};
 }
